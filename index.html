@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Patient Care Planner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh}
+.container{max-width:680px;margin:0 auto;padding:1rem 1rem 4rem}
+
+/* Full design token set */
+input,select,textarea{
+  border:1px solid #d0cfc9;border-radius:8px;padding:8px 11px;
+  font-family:inherit;font-size:13px;background:#fff;color:#1a1a1a;
+  width:100%;outline:none;transition:border-color .15s
+}
+input:focus,select:focus,textarea:focus{border-color:#888}
+textarea{resize:vertical;min-height:56px}
+button{font-family:inherit;cursor:pointer}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;padding-top:.5rem}
+.brand-date{font-size:12px;color:#888;margin-bottom:2px}
+.brand-title{font-size:20px;font-weight:600;color:#1a1a1a;letter-spacing:-.3px}
+
+.sync-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:#888}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.sync-dot.synced{background:#3B6D11}
+.sync-dot.syncing{background:#854F0B}
+.sync-dot.local{background:#185FA5}
+
+.add-patient-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s}
+.add-patient-btn:hover{background:#333}
+
+.tabs{display:flex;gap:4px;background:#e8e6e0;border-radius:10px;padding:4px;margin-bottom:1.25rem}
+.tab{flex:1;padding:8px 6px;border:none;background:transparent;border-radius:7px;font-size:13px;color:#888;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.active{background:#fff;color:#1a1a1a;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tab i{font-size:15px}
+
+.section{display:none}.section.active{display:block}
+
+.search-bar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;background:#fff;border:1px solid #d0cfc9;border-radius:10px;padding:8px 12px}
+.search-bar input{border:none;padding:0;border-radius:0;background:transparent;font-size:13px}
+.search-bar input:focus{border:none;box-shadow:none}
+.search-bar i{font-size:16px;color:#aaa;flex-shrink:0}
+
+.card{background:#fff;border:1px solid #e0deda;border-radius:14px;padding:1rem 1.25rem;margin-bottom:10px;transition:border-color .15s}
+.card.has-priority{border-color:#993C1D;border-width:1.5px}
+.card.no-tasks{opacity:.7}
+.clickable-card{cursor:pointer}
+.clickable-card:hover{border-color:#aaa;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+
+.avatar{width:36px;height:36px;border-radius:50%;background:#EEEDFE;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#3C3489;flex-shrink:0;letter-spacing:.5px}
+
+.badge{display:inline-block;font-size:11px;padding:3px 8px;border-radius:100px;font-weight:600}
+.badge-done{background:#EAF3DE;color:#27500A}
+.badge-pend{background:#FAEEDA;color:#633806}
+.badge-none{background:#f1efe8;color:#888}
+
+.act-item{display:flex;align-items:flex-start;gap:8px;padding:8px 11px;border-radius:9px;border:1px solid #ece9e3;background:#faf9f7;margin-bottom:6px;transition:border-color .1s}
+.act-item.is-priority{border-color:#993C1D;background:#fff5f2}
+.act-item.done{opacity:.5}
+.act-body{flex:1;min-width:0}
+.act-name{font-size:13px;color:#1a1a1a;line-height:1.4}
+.act-name.struck{text-decoration:line-through;color:#aaa}
+.act-note{font-size:11px;color:#888;margin-top:2px;line-height:1.4}
+.act-time{font-size:12px;color:#aaa;white-space:nowrap;flex-shrink:0;margin-top:2px;font-variant-numeric:tabular-nums}
+.act-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:#3B6D11;border-radius:4px}
+
+.star-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:1px 3px;flex-shrink:0;line-height:1;opacity:.3;transition:opacity .15s}
+.star-btn.on{opacity:1;color:#c8860a}
+.star-btn:hover{opacity:.8}
+.del-btn{background:none;border:none;cursor:pointer;color:#bbb;padding:2px 4px;font-size:14px;flex-shrink:0;line-height:1;transition:color .15s}
+.del-btn:hover{color:#c0392b}
+
+.progress-bar{height:5px;background:#ece9e3;border-radius:100px;margin:8px 0 12px}
+.progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#4a8a1a,#3B6D11);transition:width .4s ease}
+
+.day-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.day-label{font-size:15px;font-weight:600;text-align:center;flex:1;color:#1a1a1a}
+.nav-btn{background:#fff;border:1px solid #d8d5cf;border-radius:8px;padding:6px 13px;cursor:pointer;font-size:13px;color:#444;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.nav-btn:hover{background:#f5f4f0;border-color:#bbb}
+
+.add-row{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed #d0cfc9;border-radius:9px;padding:8px 12px;cursor:pointer;font-size:13px;color:#aaa;font-family:inherit;width:100%;margin-top:8px;transition:all .15s}
+.add-row:hover{background:#f9f8f6;color:#666;border-color:#aaa}
+.add-row i{font-size:15px}
+
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+.metric{background:#fff;border:1px solid #e8e5df;border-radius:12px;padding:14px 12px;text-align:center}
+.metric-val{font-size:28px;font-weight:600;line-height:1}
+.metric-lbl{font-size:12px;color:#888;margin-top:4px}
+.green{color:#3B6D11}.amber{color:#854F0B}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:#aaa;font-size:14px}
+.empty-state i{font-size:32px;display:block;margin-bottom:8px;opacity:.4}
+
+.hint{font-size:12px;color:#aaa;margin-bottom:10px}
+.hl{background:#fef3cd;color:#7a5800;border-radius:3px;padding:0 2px}
+
+.loading{text-align:center;padding:4rem 1rem;color:#aaa;font-size:14px}
+.loading i{font-size:28px;display:block;margin-bottom:10px;opacity:.5}
+
+.pat-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.pat-info{flex:1;min-width:0}
+.pat-id{font-size:14px;font-weight:600;line-height:1.4;color:#1a1a1a}
+.pat-sub{font-size:11px;color:#888;margin-top:2px;line-height:1.5}
+.pat-phone{font-size:12px;color:#888;margin-top:3px;display:flex;align-items:center;gap:4px}
+.pat-badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-left:auto;flex-shrink:0}
+
+.priority-pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;background:#fff0eb;color:#712B13;border-radius:100px;padding:2px 9px;font-weight:600;border:1px solid #f5c5b5}
+.rolled-pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;background:#e8f3ff;color:#0C447C;border-radius:100px;padding:2px 9px;font-weight:600;border:1px solid #b8d8f8}
+
+.divider{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#bbb;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #ece9e3}
+
+/* Modals */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;border:1px solid #e0deda;padding:1.5rem;width:100%;max-width:390px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:1.1rem;color:#1a1a1a}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;color:#888;margin-bottom:4px;font-weight:500}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:8px;margin-top:1.2rem}
+.btn-primary{flex:1;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-primary:hover{background:#333}
+.btn-secondary{flex:1;padding:10px;background:none;color:#444;border:1px solid #d0cfc9;border-radius:9px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-secondary:hover{background:#f5f4f0}
+
+/* Patient profile */
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13px;color:#888;padding:0;margin-bottom:1.1rem;font-family:inherit;transition:color .15s}
+.back-btn:hover{color:#1a1a1a}
+.back-btn i{font-size:16px}
+
+.profile-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:1.25rem;padding-bottom:1.1rem;border-bottom:1px solid #ece9e3}
+.profile-avatar{width:56px;height:56px;border-radius:50%;background:#EEEDFE;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#3C3489;flex-shrink:0}
+.profile-name{font-size:19px;font-weight:600;line-height:1.3;color:#1a1a1a}
+.profile-meta{font-size:12px;color:#888;margin-top:4px;line-height:1.7}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.stat-box{background:#f9f8f6;border:1px solid #ece9e3;border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:600}
+.stat-lbl{font-size:11px;color:#888;margin-top:3px}
+
+.filter-row{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{padding:5px 13px;border:1px solid #d8d5cf;border-radius:100px;font-size:12px;background:#fff;cursor:pointer;color:#888;font-family:inherit;transition:all .15s;font-weight:500}
+.filter-btn:hover{border-color:#999;color:#444}
+.filter-btn.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+
+.date-group-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#bbb;margin:14px 0 7px;display:flex;align-items:center;gap:7px}
+.today-dot{width:7px;height:7px;border-radius:50%;background:#3B6D11;flex-shrink:0}
+
+/* Dark mode */
+@media(prefers-color-scheme:dark){
+  body{background:#141412;color:#f0ede6}
+  .container{}
+  .brand-title,.pat-id,.day-label,.act-name,.profile-name,.modal h3{color:#f0ede6}
+  input,select,textarea{background:#2a2926;color:#f0ede6;border-color:#3a3835}
+  .search-bar{background:#2a2926;border-color:#3a3835}
+  .search-bar input{background:transparent;color:#f0ede6}
+  .card{background:#1e1e1c;border-color:#2e2e2c}
+  .act-item{background:#252523;border-color:#333}
+  .act-item.is-priority{background:#2a1a15}
+  .modal{background:#1e1e1c;border-color:#2e2e2c}
+  .tabs{background:#2a2926}
+  .tab.active{background:#1e1e1c;color:#f0ede6}
+  .tab{color:#888}
+  .nav-btn{background:#1e1e1c;border-color:#3a3835;color:#ccc}
+  .nav-btn:hover{background:#2a2926}
+  .add-row{border-color:#3a3835;color:#666}
+  .add-row:hover{background:#2a2926;color:#aaa}
+  .metric,.stat-box{background:#1e1e1c;border-color:#2e2e2c}
+  .progress-bar{background:#2e2e2c}
+  .filter-btn{background:#1e1e1c;border-color:#3a3835;color:#888}
+  .filter-btn.active{background:#f0ede6;color:#1a1a1a;border-color:#f0ede6}
+  .btn-primary{background:#f0ede6;color:#1a1a1a}
+  .btn-primary:hover{background:#ddd}
+  .btn-secondary{color:#ccc;border-color:#3a3835}
+  .btn-secondary:hover{background:#2a2926}
+  .add-patient-btn{background:#f0ede6;color:#1a1a1a}
+  .add-patient-btn:hover{background:#ddd}
+  .divider{border-color:#2e2e2c;color:#555}
+  .profile-header{border-color:#2e2e2c}
+  .badge-none{background:#2a2926;color:#888}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="app">
+  <div class="topbar">
+    <div>
+      <div class="brand-date" id="today-lbl"></div>
+      <div class="brand-title">Patient Care Planner</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="sync-badge"><div class="sync-dot local" id="sync-dot"></div><span id="sync-lbl">Loading...</span></div>
+      <button class="add-patient-btn" onclick="showModal('modal-patient')" id="add-btn" style="display:none">
+        <i class="ti ti-user-plus" aria-hidden="true"></i> Add patient
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('daily')"><i class="ti ti-calendar-day"></i> Daily</button>
+    <button class="tab" onclick="switchTab('patients')"><i class="ti ti-users"></i> Patients</button>
+    <button class="tab" onclick="switchTab('summary')"><i class="ti ti-chart-bar"></i> Summary</button>
+  </div>
+
+  <div id="loading-screen" class="loading">
+    <i class="ti ti-refresh"></i>Loading patient data...
+  </div>
+
+  <div id="main" style="display:none">
+    <!-- Daily Tab -->
+    <div class="section active" id="tab-daily">
+      <div class="day-nav">
+        <button class="nav-btn" onclick="changeDay(-1)"><i class="ti ti-chevron-left"></i></button>
+        <span class="day-label" id="day-display"></span>
+        <button class="nav-btn" onclick="changeDay(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="search-bar">
+        <i class="ti ti-search"></i>
+        <input type="text" id="daily-search" placeholder="Search by name, DOB, phone, room..." oninput="renderDaily()"/>
+      </div>
+      <div id="daily-content"></div>
+    </div>
+
+    <!-- Patients Tab -->
+    <div class="section" id="tab-patients">
+      <div id="patients-list-view">
+        <div class="search-bar">
+          <i class="ti ti-search"></i>
+          <input type="text" id="pat-search" placeholder="Search by name, DOB, sex, phone, room..." oninput="renderPatients()"/>
+        </div>
+        <div id="patients-content"></div>
+      </div>
+      <div id="patient-profile-view" style="display:none">
+        <div id="profile-content"></div>
+      </div>
+    </div>
+
+    <!-- Summary Tab -->
+    <div class="section" id="tab-summary">
+      <div class="summary-grid">
+        <div class="metric"><div class="metric-val" id="s-total">0</div><div class="metric-lbl">Scheduled</div></div>
+        <div class="metric"><div class="metric-val green" id="s-done">0</div><div class="metric-lbl">Completed</div></div>
+        <div class="metric"><div class="metric-val amber" id="s-pend">0</div><div class="metric-lbl">Pending</div></div>
+      </div>
+      <div id="summary-content"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="overlay" id="modal-patient" onclick="overlayClose(event,'modal-patient')">
+  <div class="modal">
+    <h3><i class="ti ti-user-plus" style="margin-right:6px;font-size:18px;vertical-align:-3px"></i>Add patient</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Last name *</label><input type="text" id="pat-last" placeholder="Smith"/></div>
+      <div class="form-group"><label>First name *</label><input type="text" id="pat-first" placeholder="John"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date of birth</label><input type="date" id="pat-dob"/></div>
+      <div class="form-group"><label>Sex</label>
+        <select id="pat-sex"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Phone number</label><input type="tel" id="pat-phone" placeholder="e.g. 678-555-1234"/></div>
+    <div class="form-group"><label>Room / ID</label><input type="text" id="pat-ref" placeholder="e.g. Room 204"/></div>
+    <div class="form-group"><label>Condition / Notes</label><input type="text" id="pat-note" placeholder="e.g. Cardiac care"/></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('modal-patient')">Cancel</button>
+      <button class="btn-primary" onclick="savePatient()">Add patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Activity Modal -->
+<div class="overlay" id="modal-activity" onclick="overlayClose(event,'modal-activity')">
+  <div class="modal">
+    <h3><i class="ti ti-calendar-plus" style="margin-right:6px;font-size:18px;vertical-align:-3px"></i>Schedule activity</h3>
+    <div class="form-group"><label>Patient</label><select id="act-patient"></select></div>
+    <div class="form-group"><label>Activity *</label><input type="text" id="act-name" placeholder="e.g. Medication review..."/></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date *</label><input type="date" id="act-date"/></div>
+      <div class="form-group"><label>Time</label><input type="time" id="act-time"/></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="act-notes" placeholder="Additional details..."></textarea></div>
+    <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+      <input type="checkbox" id="act-priority" style="width:16px;height:16px;accent-color:#993C1D;flex-shrink:0"/>
+      <label for="act-priority" style="font-size:13px;cursor:pointer;color:#555;margin:0">&#11088; Mark as priority task</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('modal-activity')">Cancel</button>
+      <button class="btn-primary" onclick="saveActivity()">Save activity</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAW=[["Aber","Barbara","1946-12-12","Female","678-595-7521"],["Abreu","Richard","1960-03-17","Male","678-989-9966"],["Addison","Fred L","1933-10-17","Male","770-535-2234"],["Addison","Sara","1940-02-27","Female","770-535-2234"],["Averell","William","1961-09-25","Male","386-837-6160"],["Baptiste","Gerard","1951-12-28","Male","470-216-4103"],["Barefield","Thomas","1963-01-20","Male","843-441-3516"],["Beauvoir","Gerard","1951-10-29","Male","516-729-2301"],["Bischof","Albert","1936-12-25","Male","404-405-2091"],["Boland","June","1942-03-19","Female","404-394-5825"],["Bradshaw","Gayle L","1964-06-09","Female","470-821-1692"],["Buckholdt","Bonnie","1944-01-08","Female","678-469-9588"],["Buice","Wendell","1958-03-12","Male","706-247-1339"],["Bugg","Steven","1951-03-28","Male","770-401-8074"],["Buss","Robert R","1941-03-24","Male","404-388-9173"],["Cantrell","Brandon M","1998-12-28","Male","770-271-0487"],["Carnes","Sherri","1966-05-10","Female","943-270-1593"],["Carter","Patricia A","1951-01-07","Female","404-673-1958"],["Castle","Peggy J","1929-06-17","Female","423-834-3458"],["Chadwin","Adrienne","1943-03-13","Female","914-588-1843"],["Chandler","Arnold H","1948-11-13","Male","770-510-8441"],["Chung","Minsook","1956-12-14","Female","405-593-3540"],["Ciccone","Karen A","1951-07-26","Female","678-727-6466"],["Coleman","Latrina","1975-11-07","Female","678-472-4907"],["Cook","Diamond E","1953-11-23","Female","678-230-8670"],["Corbin","Karey H","1950-03-13","Female","678-749-3826"],["Cormier","Donald F","1947-05-25","Male","770-855-6931"],["Cormier","Ellen M","1953-01-04","Female","770-855-6931"],["Crain","Gary","1957-03-28","Male","404-408-0781"],["Crighton","Jonathan","1994-12-12","Male","919-538-3532"],["Daqui Balarezo","Laura","1937-05-03","Female","404-917-4501"],["Darden","Gwen W","1933-08-17","Female","470-679-1235"],["Davidson","Barbara","1959-06-17","Female","404-277-5285"],["Davidson","Kerry","1957-08-13","Male","404-277-5285"],["Davis","Eleanor","1941-01-28","Female","770-324-1034"],["Davis","Minnie","1935-08-04","Female","770-851-7626"],["Dawkins","Louis","1939-12-22","Male","678-428-6476"],["Driscoll","Elspeth","1932-10-25","Female","770-330-6089"],["Dunn","Gloria","1941-06-15","Female","352-235-5362"],["Durden","Marisa L","1956-09-08","Female","706-380-2191"],["Edwards","Steven","1957-05-16","Male","773-449-9277"],["Ehlers","Michael R","1948-11-29","Male","770-337-9125"],["Ervin","Brenda","1948-07-10","Female","770-262-9438"],["Esan","Olajide O","1999-12-25","Male","678-427-4011"],["Esquivel Vasquez","Martir","1954-12-13","Male","678-300-7047"],["Evans","Cynthia","1954-11-17","Female","561-345-9140"],["Fraker","Gail","1949-10-06","Female","770-235-4842"],["Fulcher","Bennie","1935-07-24","Female","770-895-5044"],["Green","Wilbur","1936-08-27","Male","678-910-0029"],["Griffin","Nancy","1946-01-13","Female","770-639-3543"],["Hanson","Sherry","1949-09-12","Female","770-655-7856"],["Harker","Charles","1949-01-11","Male","470-390-3363"],["Harris","Natalie","1975-03-17","Female","770-366-1982"],["Harris","Willie R","1951-12-17","Male","770-356-2457"],["Hart","Vernon","1944-01-18","Male","770-329-8823"],["Harvey","Joy","1953-08-13","Female","770-844-3200"],["Harvey","Katherine","1949-09-17","Female","317-457-8844"],["Hayden","Joan","1929-05-17","Female","404-944-0656"],["Hendrix","Margaret J","1949-06-15","Female","404-374-7347"],["Hernandez","Alvaro","1959-04-15","Male","404-960-8478"],["Herrington","Alvin","1946-04-18","Male","770-601-4649"],["Hester","Birda","1937-12-13","Female","770-865-8914"],["Houston","Stanley","1977-06-24","Male","229-499-2424"],["Humphrey","Finas","1942-02-16","Male","470-557-9011"],["Jackson","Tami","1959-11-14","Female","706-584-1651"],["Jamison","Pamela","1966-08-08","Female","678-499-3901"],["Johnson","Charlie","1939-08-09","Male","404-906-3779"],["Johnson","Dana M","1982-07-01","Female","404-593-1621"],["Jones","Faye","1950-03-16","Female","470-489-4044"],["Jones","Patricia","1957-01-10","Female","404-312-1355"],["Kasparian","Ann M","1963-11-19","Female","678-255-5841"],["Kennedy","Robert","1949-12-04","Male","770-241-9025"],["Kerper","Donna L","1959-01-19","Female","610-406-7977"],["King","Roger","1959-10-21","Male","770-316-2323"],["Koehler","Mary","1934-02-24","Female","678-637-7485"],["Krutilla","Donna J","1945-10-19","Female","256-393-5333"],["Lancelot","Patricia","1938-08-19","Female","404-316-2304"],["Langston","Bernard","1945-04-06","Male","770-856-1552"],["Laurion","Mary","1954-05-05","Female","770-519-4997"],["Lazenby","Virginia","1930-05-13","Female","678-596-7722"],["Leggett","William","1974-06-17","Male","678-698-7122"],["Leyva","Maria J","1938-10-27","Female","678-665-0834"],["Lipscomb","Marilyn A","1951-12-14","Female","703-357-7917"],["Lock","Tamarah","1966-11-21","Female","770-843-3267"],["Lowell","Leslie","1946-06-22","Female","847-530-2495"],["Marritt","Kimberly","1972-01-09","Female","770-868-9407"],["Mashburn","Roger","1945-07-28","Male","678-584-3770"],["Mason","James","1952-10-21","Male","404-513-7666"],["Mauldin","Don","1952-03-12","Male","770-402-7125"],["Maulding","Jeanette S","1935-06-29","Female","678-524-4112"],["May","Julia","1948-05-27","Female","678-313-4732"],["Maydon","Michael","1953-05-31","Male","714-470-9861"],["McCart","Dale","1985-11-23","Female","943-227-6220"],["McDaniel","Phyllis","1945-11-24","Female","770-495-0261"],["McMain","Mary","1940-06-30","Female","770-601-4778"],["Merritt","Dorothy","1942-11-28","Female","770-945-0157"],["Minish","Steve","1947-09-06","Male","678-859-4754"],["Misenheimer","Peggy D","1933-02-06","Female","770-605-1713"],["Mobley","Annie L","1949-03-25","Female","678-994-1147"],["Mocharski","Antonia","1930-07-02","Female","404-324-3694"],["Moon","Gwendolyn","1958-12-07","Female","770-913-8451"],["Moon","Joyce","1935-04-20","Female","678-822-3959"],["Mooney","Jackie","1942-02-19","Male","404-784-7409"],["Moore","Dorothy","1945-10-22","Female","404-775-0638"],["Morrissey","Eileen","1943-11-03","Female","678-300-6685"],["Mosby","John","1938-05-01","Male","203-246-4122"],["Murphy","Annie","1948-02-23","Female","706-499-9886"],["Norman","Carlotta","1971-06-11","Female","943-256-6864"],["Patrick","Mary","1937-07-09","Female","678-227-4082"],["Perelman","Evghenia","1930-03-30","Female","404-723-7702"],["Phillips","Henry","1935-05-27","Male","770-480-1694"],["Pittman","Yvonne","1934-02-03","Female","404-934-5124"],["Reid","Robert","1951-09-24","Male","770-363-6303"],["Reyes","Evelyn","1958-10-08","Female","770-899-1973"],["Rosenthal","Faryl","1946-07-11","Female","404-664-3524"],["Rothstein","Esther","1943-02-18","Female","404-271-3641"],["Sanchez","Linda","1959-08-18","Female","770-616-8924"],["Serrano","Isidro","1991-07-17","Male","404-397-0762"],["Singleton","Doris","1939-03-11","Female","404-642-4182"],["Steel","Christina","1959-02-27","Female","770-864-4433"],["Sutherland","Kevin","1965-10-18","Male","470-821-8648"],["Tamaklo","David","1957-05-04","Male","781-300-1115"],["Vakoutis","Mary J","1941-11-24","Female","480-466-1226"],["Washington","Calvin","1947-12-22","Male","914-924-1972"],["Whatley","Nova","1948-11-26","Female","404-358-3783"],["Wilson","Harriet","1943-02-17","Female","678-438-8942"],["Zimmer","Norine","1934-12-12","Female","678-642-7305"]];
+
+const LS_KEY='ccp4_gh';
+let patients=[],activities=[],nextPatId=200,nextActId=200;
+const todayD=new Date();todayD.setHours(0,0,0,0);
+let viewDate=new Date(todayD);
+let currentProfileId=null,profileFilter='all';
+function fmt(d){return d instanceof Date?d.toISOString().split("T")[0]:d;}
+const todayStr=fmt(todayD);
+
+function setSync(s,t){document.getElementById("sync-dot").className="sync-dot "+s;document.getElementById("sync-lbl").textContent=t;}
+
+function lsSave(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify({patients,activities,nextPatId,nextActId}));setSync("synced","Saved · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));}
+  catch(e){setSync("local","Could not save");}
+}
+function lsLoad(){try{const r=localStorage.getItem(LS_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+
+let syncTimer=null;
+function scheduleSync(){setSync("syncing","Saving...");if(syncTimer)clearTimeout(syncTimer);syncTimer=setTimeout(lsSave,800);}
+
+function buildDefaults(){return RAW.map((r,i)=>({id:i+1,lastName:r[0],firstName:r[1],dob:r[2],sex:r[3],phone:r[4]||"",ref:"",note:""}));}
+
+function rolloverMissed(){
+  const toAdd=[];
+  activities.forEach(a=>{if(!a.done&&a.date<todayStr&&!a.rolledTo){a.rolledTo=todayStr;toAdd.push({...a,id:nextActId++,date:todayStr,rolledFrom:a.date,rolledTo:undefined,done:false});}});
+  activities.push(...toAdd);
+}
+
+function init(){
+  const saved=lsLoad();
+  if(saved&&saved.patients&&saved.patients.length>0){
+    patients=saved.patients;activities=saved.activities||[];
+    nextPatId=Math.max(saved.nextPatId||1,patients.length+1);nextActId=saved.nextActId||200;
+  }else{patients=buildDefaults();nextPatId=patients.length+1;}
+  rolloverMissed();lsSave();
+  document.getElementById("loading-screen").style.display="none";
+  document.getElementById("main").style.display="block";
+  document.getElementById("add-btn").style.display="inline-flex";
+  renderDaily();
+}
+
+function patLabel(p){return p.lastName+", "+p.firstName;}
+function patSub(p){const dob=p.dob?new Date(p.dob+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}):"";return[dob,p.sex].filter(Boolean).join(" · ");}
+function initials(p){return((p.lastName[0]||"")+(p.firstName[0]||"")).toUpperCase();}
+function hl(t,q){if(!q||!t)return t||"";return t.replace(new RegExp("("+q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi"),'<span class="hl">$1</span>');}
+function matchPat(p,q){if(!q)return true;const lq=q.toLowerCase();return(p.lastName+" "+p.firstName).toLowerCase().includes(lq)||(p.dob||"").includes(lq)||(p.sex||"").toLowerCase().includes(lq)||(p.phone||"").includes(lq)||(p.ref||"").toLowerCase().includes(lq)||(p.note||"").toLowerCase().includes(lq);}
+function hasPriority(pid,ds){return activities.some(a=>a.patientId===pid&&a.date===ds&&a.priority&&!a.done);}
+function hasTasks(pid,ds){return activities.some(a=>a.patientId===pid&&a.date===ds);}
+function sortForDay(list,ds){return[...list].sort((a,b)=>{const ap=hasPriority(a.id,ds),bp=hasPriority(b.id,ds);if(ap&&!bp)return -1;if(!ap&&bp)return 1;const at=hasTasks(a.id,ds),bt=hasTasks(b.id,ds);if(at&&!bt)return -1;if(!at&&bt)return 1;return a.lastName.localeCompare(b.lastName);});}
+function fmtDisplay(ds){const d=new Date(ds+"T00:00:00");if(ds===todayStr)return"Today — "+d.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});const tom=fmt(new Date(todayD.getTime()+86400000));if(ds===tom)return"Tomorrow — "+d.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});return d.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});}
+function fmtShort(ds){return new Date(ds+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+
+function switchTab(tab){
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["daily","patients","summary"][i]===tab));
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("tab-"+tab).classList.add("active");
+  if(tab==="daily")renderDaily();
+  if(tab==="patients"){showPatientsList();renderPatients();}
+  if(tab==="summary")renderSummary();
+}
+function changeDay(d){viewDate=new Date(viewDate.getTime()+d*86400000);renderDaily();}
+
+function patCard(p,ds,q){
+  const isPri=hasPriority(p.id,ds);
+  const pActs=activities.filter(a=>a.patientId===p.id&&a.date===ds).sort((a,b)=>{if(a.priority&&!b.priority)return -1;if(!a.priority&&b.priority)return 1;return(a.time||"99").localeCompare(b.time||"99");});
+  const done=pActs.filter(a=>a.done).length;
+  const pct=pActs.length?Math.round((done/pActs.length)*100):0;
+  const hasRolled=pActs.some(a=>a.rolledFrom);
+  let c='<div class="card'+(isPri?" has-priority":"")+(!pActs.length?" no-tasks":"")+'"><div class="pat-header"><div class="avatar">'+initials(p)+'</div><div class="pat-info"><div class="pat-id">'+hl(patLabel(p),q)+'</div><div class="pat-sub">'+hl(patSub(p),q)+'</div>'+(p.phone?'<div class="pat-phone"><i class="ti ti-phone" style="font-size:12px"></i> '+hl(p.phone,q)+'</div>':"")+'</div><div class="pat-badges">'+(isPri?'<span class="priority-pill">&#11088; Priority</span>':"")+(hasRolled?'<span class="rolled-pill">&#8635; Rolled</span>':"")+(pActs.length?'<span style="font-size:12px;color:#aaa">'+done+"/"+pActs.length+'</span>':"")+'</div></div>';
+  if(pActs.length){
+    c+='<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>';
+    pActs.forEach(a=>{c+='<div class="act-item'+(a.priority?" is-priority":"")+(a.done?" done":"")+'"><input type="checkbox" '+(a.done?"checked":"")+" onchange=\"toggleAct("+a.id+")\"><div class=\"act-body\"><div class=\"act-name"+(a.done?" struck":"")+'\">'+(a.priority?"&#11088; ":"")+a.name+(a.rolledFrom?' <span style="font-size:10px;color:#0C447C">(from '+fmtShort(a.rolledFrom)+')</span>':"")+'</div>'+(a.notes?'<div class="act-note">'+a.notes+'</div>':"")+'</div>'+(a.time?'<div class="act-time">'+a.time+'</div>':"")+'<button class="star-btn'+(a.priority?" on":"")+"\" onclick=\"toggleActPri("+a.id+")\">"+(a.priority?"&#11088;":"&#10025;")+'</button><button class="del-btn" onclick="delAct('+a.id+')"><i class="ti ti-x"></i></button></div>';});
+  }else{c+='<div style="font-size:13px;color:#aaa;padding:4px 0;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar-off" style="font-size:15px"></i>No activities scheduled</div>';}
+  c+='<button class="add-row" onclick="openAddAct('+p.id+')"><i class="ti ti-plus"></i> Add activity for '+p.firstName+'</button></div>';
+  return c;
+}
+
+function renderDaily(){
+  const ds=fmt(viewDate);
+  document.getElementById("day-display").textContent=fmtDisplay(ds);
+  const q=(document.getElementById("daily-search")||{value:""}).value.trim();
+  const filtered=patients.filter(p=>matchPat(p,q));
+  const sorted=sortForDay(filtered,ds);
+  const div=document.getElementById("daily-content");
+  if(!patients.length){div.innerHTML='<div class="empty-state"><i class="ti ti-users"></i>No patients yet. Add one to get started.</div>';return;}
+  if(!filtered.length){div.innerHTML='<div class="empty-state"><i class="ti ti-search"></i>No patients match your search.</div>';return;}
+  const withT=sorted.filter(p=>hasTasks(p.id,ds));
+  const noT=sorted.filter(p=>!hasTasks(p.id,ds));
+  let html=filtered.length<patients.length?'<div class="hint">Showing '+filtered.length+" of "+patients.length+" patients</div>":"";
+  withT.forEach(p=>{html+=patCard(p,ds,q);});
+  if(noT.length){if(withT.length)html+='<div class="divider">No activities scheduled</div>';noT.forEach(p=>{html+=patCard(p,ds,q);});}
+  div.innerHTML=html;
+}
+
+function renderPatients(){
+  const q=(document.getElementById("pat-search")||{value:""}).value.trim();
+  const filtered=[...patients].filter(p=>matchPat(p,q)).sort((a,b)=>a.lastName.localeCompare(b.lastName)||a.firstName.localeCompare(b.firstName));
+  const div=document.getElementById("patients-content");
+  let html='<div class="hint">'+(filtered.length<patients.length?filtered.length+" of "+patients.length+" patients":patients.length+" patients total")+'</div>';
+  if(!filtered.length){div.innerHTML='<div class="empty-state"><i class="ti ti-search"></i>No patients match.</div>';return;}
+  filtered.forEach(p=>{
+    const all=activities.filter(a=>a.patientId===p.id);
+    const td=all.filter(a=>a.date===todayStr);
+    const done=td.filter(a=>a.done).length;
+    const pct=td.length?Math.round((done/td.length)*100):-1;
+    html+='<div class="card clickable-card" onclick="openPatientProfile('+p.id+')"><div class="pat-header" style="margin-bottom:0"><div class="avatar">'+initials(p)+'</div><div class="pat-info"><div class="pat-id">'+hl(patLabel(p),q)+'</div><div class="pat-sub">'+hl(patSub(p),q)+'</div>'+(p.phone?'<div class="pat-phone"><i class="ti ti-phone" style="font-size:12px"></i> '+hl(p.phone,q)+'</div>':"")+'</div><div class="pat-badges"><span class="badge '+(pct===100?"badge-done":pct>=0?"badge-pend":"badge-none")+'">'+(pct>=0?done+"/"+td.length+" today":"No tasks")+'</span><i class="ti ti-chevron-right" style="font-size:16px;color:#bbb"></i></div></div>'+(td.length?'<div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:'+(pct<0?0:pct)+'%"></div></div>':"")+'<div style="font-size:12px;color:#aaa;margin-top:8px">'+all.length+" total activities · "+all.filter(a=>a.done).length+' completed all-time</div></div>';
+  });
+  div.innerHTML=html;
+}
+
+function showPatientsList(){document.getElementById("patients-list-view").style.display="block";document.getElementById("patient-profile-view").style.display="none";currentProfileId=null;}
+
+function openPatientProfile(pid){currentProfileId=pid;profileFilter='all';document.getElementById("patients-list-view").style.display="none";document.getElementById("patient-profile-view").style.display="block";renderProfile();}
+
+function renderProfile(){
+  const p=patients.find(x=>x.id===currentProfileId);if(!p){showPatientsList();return;}
+  const allActs=activities.filter(a=>a.patientId===p.id).sort((a,b)=>b.date.localeCompare(a.date)||(a.time||"99").localeCompare(b.time||"99"));
+  const total=allActs.length,doneCount=allActs.filter(a=>a.done).length,pendCount=allActs.filter(a=>!a.done&&a.date<=todayStr).length,upcomingCount=allActs.filter(a=>!a.done&&a.date>todayStr).length;
+  let filtered=allActs;
+  if(profileFilter==='done')filtered=allActs.filter(a=>a.done);
+  else if(profileFilter==='pending')filtered=allActs.filter(a=>!a.done&&a.date<=todayStr);
+  else if(profileFilter==='upcoming')filtered=allActs.filter(a=>!a.done&&a.date>todayStr);
+  const grouped={};filtered.forEach(a=>{if(!grouped[a.date])grouped[a.date]=[];grouped[a.date].push(a);});
+  const sortedDates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+  const dob=p.dob?new Date(p.dob+"T00:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}):"";
+  const metaParts=[dob,p.sex,p.ref,p.note,p.phone].filter(Boolean);
+  let html='<button class="back-btn" onclick="showPatientsList()"><i class="ti ti-arrow-left"></i> All patients</button>';
+  html+='<div class="profile-header"><div class="profile-avatar">'+initials(p)+'</div><div style="flex:1;min-width:0"><div class="profile-name">'+p.lastName+", "+p.firstName+'</div><div class="profile-meta">'+metaParts.join(" · ")+'</div></div><div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap"><button class="nav-btn" onclick="openAddAct('+p.id+')" style="font-size:12px;padding:6px 11px"><i class="ti ti-plus"></i> Add</button><button class="del-btn" onclick="delPatientFromProfile('+p.id+')" style="padding:6px 9px;border:1px solid #e0deda;border-radius:8px"><i class="ti ti-trash"></i></button></div></div>';
+  html+='<div class="stat-row"><div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Total</div></div><div class="stat-box"><div class="stat-val green">'+doneCount+'</div><div class="stat-lbl">Completed</div></div><div class="stat-box"><div class="stat-val amber">'+pendCount+'</div><div class="stat-lbl">Pending</div></div></div>';
+  html+='<div class="filter-row"><button class="filter-btn'+(profileFilter==='all'?" active":"")+"\" onclick=\"setProfileFilter('all')\">All ("+total+')</button><button class="filter-btn'+(profileFilter==='done'?" active":"")+"\" onclick=\"setProfileFilter('done')\">Done ("+doneCount+')</button><button class="filter-btn'+(profileFilter==='pending'?" active":"")+"\" onclick=\"setProfileFilter('pending')\">Pending ("+pendCount+')</button><button class="filter-btn'+(profileFilter==='upcoming'?" active":"")+"\" onclick=\"setProfileFilter('upcoming')\">Upcoming ("+upcomingCount+')</button></div>';
+  if(!filtered.length){html+='<div class="empty-state"><i class="ti ti-calendar-off"></i>No activities in this category.</div>';}
+  else{sortedDates.forEach(ds=>{const isToday=ds===todayStr;html+='<div class="date-group-label">'+(isToday?'<span class="today-dot"></span>':"")+'<span>'+fmtDisplay(ds)+'</span></div>';grouped[ds].forEach(a=>{html+='<div class="act-item'+(a.priority?" is-priority":"")+(a.done?" done":"")+'"><input type="checkbox" '+(a.done?"checked":"")+" onchange=\"toggleActProfile("+a.id+")\"><div class=\"act-body\"><div class=\"act-name"+(a.done?" struck":"")+'\">'+(a.priority?"&#11088; ":"")+a.name+(a.rolledFrom?' <span style="font-size:10px;color:#0C447C">(from '+fmtShort(a.rolledFrom)+')</span>':"")+'</div>'+(a.notes?'<div class="act-note">'+a.notes+'</div>':"")+'</div>'+(a.time?'<div class="act-time">'+a.time+'</div>':"")+'<button class="star-btn'+(a.priority?" on":"")+"\" onclick=\"togglePriProfile("+a.id+")\">"+(a.priority?"&#11088;":"&#10025;")+'</button><button class="del-btn" onclick="delActProfile('+a.id+')"><i class="ti ti-x"></i></button></div>';});});}
+  document.getElementById("profile-content").innerHTML=html;
+}
+
+function setProfileFilter(f){profileFilter=f;renderProfile();}
+function toggleActProfile(id){const a=activities.find(x=>x.id===id);if(a){a.done=!a.done;scheduleSync();renderProfile();}}
+function togglePriProfile(id){const a=activities.find(x=>x.id===id);if(a){a.priority=!a.priority;scheduleSync();renderProfile();}}
+function delActProfile(id){activities=activities.filter(x=>x.id!==id);scheduleSync();renderProfile();}
+function delPatientFromProfile(id){patients=patients.filter(p=>p.id!==id);activities=activities.filter(a=>a.patientId!==id);scheduleSync();showPatientsList();renderPatients();}
+
+function renderSummary(){
+  const ds=fmt(viewDate);const dayActs=activities.filter(a=>a.date===ds);const done=dayActs.filter(a=>a.done).length;
+  document.getElementById("s-total").textContent=dayActs.length;document.getElementById("s-done").textContent=done;document.getElementById("s-pend").textContent=dayActs.length-done;
+  const sorted=sortForDay(patients,ds).filter(p=>hasTasks(p.id,ds));
+  let html='<div style="font-size:13px;font-weight:600;margin-bottom:12px;color:#1a1a1a">By patient — '+fmtDisplay(ds)+'</div>';
+  if(!sorted.length)html+='<div class="empty-state"><i class="ti ti-calendar-off"></i>No activities scheduled for this day.</div>';
+  sorted.forEach(p=>{const pA=dayActs.filter(a=>a.patientId===p.id);const pD=pA.filter(a=>a.done).length;const pct=pA.length?Math.round((pD/pA.length)*100):0;const isPri=hasPriority(p.id,ds);html+='<div class="card'+(isPri?" has-priority":"")+'"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div class="avatar" style="width:30px;height:30px;font-size:10px">'+initials(p)+'</div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+patLabel(p)+'</div>'+(p.phone?'<div style="font-size:11px;color:#aaa">'+p.phone+'</div>':"")+'</div>'+(isPri?'<span class="priority-pill">&#11088;</span>':"")+'<span class="badge '+(pct===100?"badge-done":pct>0?"badge-pend":"badge-none")+'">'+pct+'%</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div style="font-size:12px;color:#aaa;margin-top:6px">'+pD+' of '+pA.length+' completed</div></div>';});
+  document.getElementById("summary-content").innerHTML=html;
+}
+
+function toggleAct(id){const a=activities.find(x=>x.id===id);if(a){a.done=!a.done;scheduleSync();renderDaily();}}
+function toggleActPri(id){const a=activities.find(x=>x.id===id);if(a){a.priority=!a.priority;scheduleSync();renderDaily();}}
+function delAct(id){activities=activities.filter(x=>x.id!==id);scheduleSync();renderDaily();}
+function overlayClose(e,id){if(e.target===e.currentTarget)hideModal(id);}
+function showModal(id){document.getElementById(id).classList.add("open");}
+function hideModal(id){document.getElementById(id).classList.remove("open");}
+function openAddAct(preId){
+  const sel=document.getElementById("act-patient");
+  sel.innerHTML=[...patients].sort((a,b)=>a.lastName.localeCompare(b.lastName)).map(p=>'<option value="'+p.id+'" '+(p.id===preId?"selected":"")+'>'+p.lastName+", "+p.firstName+"</option>").join("");
+  document.getElementById("act-date").value=fmt(viewDate);
+  ["act-name","act-time","act-notes"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("act-priority").checked=false;
+  showModal("modal-activity");
+}
+function saveActivity(){
+  const name=document.getElementById("act-name").value.trim();const date=document.getElementById("act-date").value;if(!name||!date)return;
+  activities.push({id:nextActId++,patientId:parseInt(document.getElementById("act-patient").value),name,date,time:document.getElementById("act-time").value,done:false,notes:document.getElementById("act-notes").value.trim(),priority:document.getElementById("act-priority").checked});
+  scheduleSync();hideModal("modal-activity");if(currentProfileId!==null)renderProfile();else renderDaily();
+}
+function savePatient(){
+  const last=document.getElementById("pat-last").value.trim();const first=document.getElementById("pat-first").value.trim();if(!last||!first)return;
+  patients.push({id:nextPatId++,lastName:last,firstName:first,dob:document.getElementById("pat-dob").value,sex:document.getElementById("pat-sex").value,phone:document.getElementById("pat-phone").value.trim(),ref:document.getElementById("pat-ref").value.trim(),note:document.getElementById("pat-note").value.trim()});
+  patients.sort((a,b)=>a.lastName.localeCompare(b.lastName));scheduleSync();hideModal("modal-patient");renderPatients();
+}
+document.getElementById("today-lbl").textContent=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+init();
+</script>
+</body>
+</html>
